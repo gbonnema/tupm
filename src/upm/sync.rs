@@ -3,13 +3,14 @@
 //! "delete" primitives of the UPM sync protocol.
 
 use multipart::client::lazy::Multipart;
-use reqwest;
-use reqwest::mime;
+use multipart::server::nickel::nickel::hyper::mime;
+use reqwest::multipart;
+use std::borrow::Cow;
 use std::io::Cursor;
 use std::io::Read;
+use std::path::{Path, PathBuf};
 use std::str;
 use std::time::Duration;
-use std::path::{Path, PathBuf};
 
 use backup;
 use database::Database;
@@ -64,8 +65,17 @@ impl Repository {
     /// Create a new `Repository` struct with the provided URL and credentials.
     fn new(url: &str, http_username: &str, http_password: &str) -> Repository {
         // Create a new reqwest client.
-        let mut client = reqwest::Client::new().unwrap();
-        client.timeout(Duration::from_secs(TIMEOUT_SECS));
+        let client = match reqwest::Client::builder()
+            .timeout(Duration::from_secs(TIMEOUT_SECS))
+            .build()
+        {
+            Ok(cl) => cl,
+            Err(e) => {
+                let s = format!("Error creating a client: {}", e);
+                eprintln!("{}", s);
+                std::process::exit(1);
+            }
+        };
 
         Repository {
             url: String::from(url),
@@ -86,7 +96,8 @@ impl Repository {
         let url = self.make_url(database_name);
 
         // Send request
-        let mut response = self.client
+        let mut response = self
+            .client
             .get(&url)
             .basic_auth(self.http_username.clone(), Some(self.http_password.clone()))
             .send()?;
@@ -94,7 +105,7 @@ impl Repository {
         // Process response
         if !response.status().is_success() {
             return match response.status() {
-                &reqwest::StatusCode::NotFound => Err(UpmError::SyncDatabaseNotFound),
+                reqwest::StatusCode::NOT_FOUND => Err(UpmError::SyncDatabaseNotFound),
                 _ => Err(UpmError::Sync(format!("{}", response.status()))),
             };
         }
@@ -108,7 +119,8 @@ impl Repository {
         let url = self.make_url(DELETE_CMD);
 
         // Send request
-        let mut response = self.client
+        let mut response = self
+            .client
             .post(&url)
             .basic_auth(self.http_username.clone(), Some(self.http_password.clone()))
             .form(&[("fileToDelete", database_name)])
@@ -144,24 +156,17 @@ impl Repository {
         let mut multipart_buffer: Vec<u8> = vec![];
         multipart_prepared.read_to_end(&mut multipart_buffer)?;
 
+        // Thanks to Sean (seanmonstar) for helping to translate this code to multipart code
+        // of reqwest
+        let dbname = database_name.to_string();
+        let part = multipart::Part::bytes(database_bytes.clone())
+            .file_name(dbname)
+            .mime_str("application/octet-stream")?;
+
+        let form = multipart::Form::new().part(UPM_UPLOAD_FIELD_NAME, part);
+
         // Send request
-        let mut response = self.client
-            .post(&url)
-            .basic_auth(self.http_username.clone(), Some(self.http_password.clone()))
-            .header(reqwest::header::ContentType(mime::Mime(
-                mime::TopLevel::Multipart,
-                mime::SubLevel::FormData,
-                vec![
-                    (
-                        mime::Attr::Ext(String::from(BOUNDARY_ATTRIBUTE)),
-                        mime::Value::Ext(
-                            String::from(multipart_prepared.boundary()),
-                        )
-                    ),
-                ],
-            )))
-            .body(multipart_buffer)
-            .send()?;
+        let mut response = self.client.post(&url).multipart(form).send()?;
 
         // Process response
         self.check_response(&mut response)?;
@@ -317,10 +322,7 @@ pub fn sync(database: &Database, remote_password: Option<&str>) -> Result<SyncRe
 
         // Upload the local database to the remote.  Make sure to re-encrypt with the local
         // password, in case it has been changed recently.
-        repo.upload(
-            database_name,
-            database.save_to_bytes(local_password)?,
-        )?;
+        repo.upload(database_name, database.save_to_bytes(local_password)?)?;
         Ok(SyncResult::RemoteSynced)
     } else if database.sync_revision < remote_database.sync_revision {
         // Replace the local database with the remote database
