@@ -22,16 +22,16 @@ use tupm::controller;
 use upm::database::{Account, Database};
 
 // View ids.  These are used to reference specific views within the Cursive view tree.
-static VIEW_ID_SELECT: &'static str = "select";
-static VIEW_ID_DETAIL: &'static str = "detail";
-static VIEW_ID_FILTER: &'static str = "filter";
-static VIEW_ID_REVISION: &'static str = "revision";
-static VIEW_ID_MODIFIED: &'static str = "modified";
-static VIEW_ID_COUNT: &'static str = "count";
-static VIEW_ID_STATUSLINE: &'static str = "statusline";
-static VIEW_ID_EDIT: &'static str = "edit";
-static VIEW_ID_MODAL: &'static str = "modal";
-static VIEW_ID_INPUT: &'static str = "input";
+const VIEW_ID_SELECT: &'static str = "select";
+const VIEW_ID_DETAIL: &'static str = "detail";
+const VIEW_ID_FILTER: &'static str = "filter";
+const VIEW_ID_REVISION: &'static str = "revision";
+const VIEW_ID_MODIFIED: &'static str = "modified";
+const VIEW_ID_COUNT: &'static str = "count";
+const VIEW_ID_STATUSLINE: &'static str = "statusline";
+const VIEW_ID_EDIT: &'static str = "edit";
+const VIEW_ID_MODAL: &'static str = "modal";
+const VIEW_ID_INPUT: &'static str = "input";
 
 // Human-readable field labels
 const FIELD_NAME: &'static str = "Account";
@@ -48,7 +48,7 @@ struct Field {
 }
 
 /// Provide a description of each account field.
-static FIELDS: [Field; 5] = [
+const FIELDS: [Field; 5] = [
     Field {
         name: FIELD_NAME,
         secret: false,
@@ -257,11 +257,7 @@ impl AccountSelectView {
 
     /// Return the currently selected account, if any.
     pub fn selection(&self) -> Option<Rc<Account>> {
-        if self.content.is_empty() {
-            None
-        } else {
-            self.content.selection()
-        }
+        self.content.selection()
     }
 
     /// Clear the list.
@@ -678,7 +674,7 @@ impl Ui {
 
         let mut account_list = AccountSelectView::new(ui.database.clone());
 
-        let account_detail = TextView::new("").scrollable().with_id(VIEW_ID_DETAIL);
+        let account_detail = TextView::new("").with_id(VIEW_ID_DETAIL).scrollable();
 
         let account_detail_panel = Panel::new(BoxView::new(
             // Hack to make the detail panel consume the rest of the horizontal space.  Full wasn't
@@ -691,12 +687,10 @@ impl Ui {
 
         let ui_tx_clone = ui.ui_tx.clone();
         account_list.set_on_select(move |s, account| {
-            let mut detail = match s.find_id::<TextView>(VIEW_ID_DETAIL) {
-                Some(x) => x,
-                None => return,
-            };
-            detail.set_content(render_account_text(account, false));
-            ui_tx_clone.send(UiMessage::UpdateStatus).unwrap();
+            s.call_on_id(VIEW_ID_DETAIL, |detail: &mut TextView| {
+                detail.set_content(render_account_text(account, false));
+                ui_tx_clone.send(UiMessage::UpdateStatus).unwrap();
+            });
         });
 
         let ui_tx_clone = ui.ui_tx.clone();

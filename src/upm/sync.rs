@@ -2,10 +2,7 @@
 //! remote repository should be an HTTP or HTTPS server supporting the "download", "upload", and
 //! "delete" primitives of the UPM sync protocol.
 
-use multipart::client::lazy::Multipart;
-use multipart::server::nickel::nickel::hyper::mime;
 use reqwest::multipart;
-use std::io::Cursor;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::str;
@@ -31,6 +28,9 @@ const UPM_SUCCESS: &'static str = "OK";
 
 /// UPM sync protocol responses should never be longer than this size.
 const UPM_MAX_RESPONSE_CODE_LENGTH: usize = 64;
+
+/// The MIME type used when uploading a database.
+const DATABASE_MIME_TYPE: &'static str = "application/octet-stream";
 
 impl From<reqwest::Error> for UpmError {
     /// Convert a reqwest error into a `UpmError`.
@@ -60,26 +60,18 @@ struct Repository {
 
 impl Repository {
     /// Create a new `Repository` struct with the provided URL and credentials.
-    fn new(url: &str, http_username: &str, http_password: &str) -> Repository {
+    fn new(url: &str, http_username: &str, http_password: &str) -> Result<Repository, UpmError> {
         // Create a new reqwest client.
-        let client = match reqwest::Client::builder()
+        let client = reqwest::Client::builder()
             .timeout(Duration::from_secs(TIMEOUT_SECS))
-            .build()
-        {
-            Ok(cl) => cl,
-            Err(e) => {
-                let s = format!("Error creating a client: {}", e);
-                eprintln!("{}", s);
-                std::process::exit(1);
-            }
-        };
+            .build()?;
 
-        Repository {
+        Ok(Repository {
             url: String::from(url),
             http_username: String::from(http_username),
             http_password: String::from(http_password),
             client,
-        }
+        })
     }
 
     //
@@ -133,32 +125,11 @@ impl Repository {
     fn upload(&mut self, database_name: &str, database_bytes: Vec<u8>) -> Result<(), UpmError> {
         let url: String = self.make_url(UPLOAD_CMD);
 
-        // Construct a multipart body
-        let mut multipart = Multipart::new();
-        let content_type = mime::Mime(
-            mime::TopLevel::Application,
-            mime::SubLevel::OctetStream,
-            vec![],
-        );
-        multipart.add_stream(
-            UPM_UPLOAD_FIELD_NAME,
-            Cursor::new(&database_bytes[..]),
-            Some(database_name),
-            Some(content_type),
-        );
-        let mut multipart_prepared = match multipart.prepare() {
-            Ok(p) => p,
-            Err(_) => return Err(UpmError::Sync(String::from("Cannot prepare file upload"))),
-        };
-        let mut multipart_buffer: Vec<u8> = vec![];
-        multipart_prepared.read_to_end(&mut multipart_buffer)?;
-
         // Thanks to Sean (seanmonstar) for helping to translate this code to multipart code
         // of reqwest
-        let dbname = database_name.to_string();
         let part = multipart::Part::bytes(database_bytes.clone())
-            .file_name(dbname)
-            .mime_str("application/octet-stream")?;
+            .file_name(database_name.to_string())
+            .mime_str(DATABASE_MIME_TYPE)?;
 
         let form = multipart::Form::new().part(UPM_UPLOAD_FIELD_NAME, part);
 
@@ -209,7 +180,7 @@ pub fn download<P: AsRef<Path>>(
     repo_password: &str,
     database_filename: P,
 ) -> Result<Vec<u8>, UpmError> {
-    let mut repo = Repository::new(repo_url, repo_username, repo_password);
+    let mut repo = Repository::new(repo_url, repo_username, repo_password)?;
     let name = Database::path_to_name(&database_filename)?;
     repo.download(&name)
 }
@@ -279,7 +250,7 @@ pub fn sync(database: &Database, remote_password: Option<&str>) -> Result<SyncRe
         &database.sync_url,
         &sync_account.user,
         &sync_account.password,
-    );
+    )?;
     let remote_exists;
     let mut remote_database = match repo.download(database_name) {
         Ok(bytes) => {
