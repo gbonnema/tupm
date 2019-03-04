@@ -314,29 +314,16 @@ impl AccountEditView {
         };
 
         for field in FIELDS.into_iter() {
-            let id = format!("{}_{}", VIEW_ID_EDIT, field.name);
             let mut edit_view = EditView::new();
             edit_view.set_secret(field.secret);
+            let width = SizeConstraint::AtLeast(30);
+            let label = labelify(field.name);
             if !field.multiline {
-                v_layout.add_child(
-                    LinearLayout::horizontal()
-                        .child(TextView::new(labelify(field.name)))
-                        .child(BoxView::new(
-                            SizeConstraint::AtLeast(30),
-                            SizeConstraint::AtMost(1),
-                            edit_view.with_id(id),
-                        )),
-                );
+                let height = SizeConstraint::AtMost(1);
+                AccountEditView::add_field(&mut v_layout, edit_view, width, height, field, label);
             } else {
-                v_layout.add_child(
-                    LinearLayout::vertical()
-                        .child(TextView::new(labelify(field.name)))
-                        .child(BoxView::new(
-                            SizeConstraint::AtLeast(30),
-                            SizeConstraint::Fixed(10),
-                            TextArea::new().with_id(id),
-                        )),
-                );
+                let height = SizeConstraint::Fixed(10);
+                AccountEditView::add_field(&mut v_layout, edit_view, width, height, field, label);
             }
         }
         v_layout.add_child(TextView::new("Ctrl-R: Reveal password"));
@@ -348,6 +335,22 @@ impl AccountEditView {
         };
         account_edit.load();
         account_edit
+    }
+    // help function to add an account field to the account edit view
+    fn add_field<V: View>(
+        layout: &mut LinearLayout,
+        view: V,
+        width: SizeConstraint,
+        height: SizeConstraint,
+        field: &Field,
+        label: String,
+    ) {
+        let id = format!("{}_{}", VIEW_ID_EDIT, field.name);
+        layout.add_child(
+            LinearLayout::vertical()
+                .child(TextView::new(label))
+                .child(BoxView::new(width, height, view.with_id(id))),
+        );
     }
 
     /// Provision a new dialog box containing an AccountEditView and some basic handlers.
