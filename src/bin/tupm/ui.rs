@@ -19,7 +19,8 @@ use std::rc::Rc;
 use std::sync::mpsc;
 use tupm::clipboard::clipboard_copy;
 use tupm::controller;
-use upm::database::{Account, Database};
+use upm::account::Account;
+use upm::database::Database;
 
 // View ids.  These are used to reference specific views within the Cursive view tree.
 const VIEW_ID_SELECT: &'static str = "select";

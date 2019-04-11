@@ -12,6 +12,7 @@ extern crate time;
 #[macro_use]
 extern crate matches;
 
+pub mod account;
 pub mod backup;
 mod crypto;
 pub mod database;
