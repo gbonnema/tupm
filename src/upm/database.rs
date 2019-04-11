@@ -39,7 +39,6 @@ use account::Account;
 use crypto;
 use error::UpmError;
 use rand::{OsRng, Rng};
-use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::fmt;
 use std::fs;

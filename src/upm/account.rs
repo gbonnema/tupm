@@ -5,7 +5,6 @@
 //!
 
 use std::cmp::Ordering;
-use std::str;
 
 /// This struct represents a single UPM account, and provides an ordering based on the
 /// alphanumeric case-insensitive comparison of account names.
