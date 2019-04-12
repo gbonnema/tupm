@@ -28,6 +28,15 @@ impl Account {
             notes: String::new(),
         }
     }
+
+    // Update this account including the name of the account.
+    pub fn update(&mut self, account: Account) {
+        self.name = account.name;
+        self.user = account.user;
+        self.password = account.password;
+        self.url = account.url;
+        self.notes = account.notes;
+    }
 }
 
 impl Ord for Account {

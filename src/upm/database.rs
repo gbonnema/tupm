@@ -464,11 +464,7 @@ impl Database {
 
         // Update account
         if let Some(account) = self.account_mut(name) {
-            account.name = new_account.name.clone();
-            account.user = new_account.user.clone();
-            account.password = new_account.password.clone();
-            account.url = new_account.url.clone();
-            account.notes = new_account.notes.clone();
+            account.update(new_account.clone());
         }
         Ok(())
     }
