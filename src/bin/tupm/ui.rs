@@ -401,7 +401,7 @@ impl AccountEditView {
     /// Handle the CTRL-R "reveal password" feature.
     fn reveal_password(&mut self) {
         let id = format!("{}_{}", VIEW_ID_EDIT, FIELD_PASSWORD);
-        self.find_id(&id, |edit_view: &mut EditView| {
+        self.call_on_id(&id, |edit_view: &mut EditView| {
             edit_view.set_secret(false);
         });
     }
@@ -413,9 +413,9 @@ impl AccountEditView {
             .into_iter()
             .any(|f| f.name == field_name && f.multiline)
         {
-            self.find_id(&id, |edit_view: &mut TextArea| edit_view.set_content(value));
+            self.call_on_id(&id, |edit_view: &mut TextArea| edit_view.set_content(value));
         } else {
-            self.find_id(&id, |edit_view: &mut EditView| edit_view.set_content(value));
+            self.call_on_id(&id, |edit_view: &mut EditView| edit_view.set_content(value));
         }
     }
 
@@ -427,14 +427,14 @@ impl AccountEditView {
             .into_iter()
             .any(|f| f.name == field_name && f.multiline)
         {
-            match self.find_id(&id, |edit_view: &mut TextArea| {
+            match self.call_on_id(&id, |edit_view: &mut TextArea| {
                 String::from(edit_view.get_content())
             }) {
                 Some(x) => x,
                 None => String::from(""),
             }
         } else {
-            match self.find_id(&id, |edit_view: &mut EditView| edit_view.get_content()) {
+            match self.call_on_id(&id, |edit_view: &mut EditView| edit_view.get_content()) {
                 Some(x) => (*x).clone(),
                 None => String::from(""),
             }
