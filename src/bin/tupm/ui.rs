@@ -753,6 +753,7 @@ impl Ui {
         let statusline_text = TextView::new("").with_id(VIEW_ID_STATUSLINE);
 
         let help_text = TextView::new("Press escape or \\ for menu.");
+        let backend_text = TextView::new(format!(" | backend: {}", ui.cursive.backend_name()));
         let status_layout = LinearLayout::horizontal()
             .child(TextView::new("filter: "))
             .child(BoxView::new(
@@ -765,7 +766,8 @@ impl Ui {
             .child(revision_text)
             .child(modified_text)
             .child(TextView::new(" | "))
-            .child(count_text);
+            .child(count_text)
+            .child(backend_text);
         let status_layout = LinearLayout::vertical()
             .child(status_layout)
             .child(help_text)
