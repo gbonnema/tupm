@@ -396,6 +396,8 @@ impl AccountEditView {
                 })
                 .dismiss_button("Cancel"),
         );
+
+        cursive.refresh();
     }
 
     /// Handle the CTRL-R "reveal password" feature.
@@ -1059,6 +1061,10 @@ impl Ui {
         self.ui_rx.try_iter().next()
     }
 
+    pub fn refresh(&mut self) {
+        self.cursive.refresh();
+    }
+
     /// Step the UI by calling into Cursive's step function, then processing any UI messages.
     pub fn step(&mut self) -> bool {
         if !self.cursive.is_running() {
@@ -1299,6 +1305,7 @@ impl Ui {
                 modified_text.set_content("");
             }
         };
+        self.cursive.refresh();
     }
 
     /// Update the status line.
