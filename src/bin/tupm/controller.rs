@@ -164,6 +164,8 @@ impl Controller {
     /// Run the controller.  This method contains the main loop which will step the UI and process
     /// events until the user quits the application.
     pub fn run(&mut self) {
+        self.ui.refresh();
+
         while self.ui.step() {
             while let Some(message) = self.next_message() {
                 // Dispatch to handler functions as needed.

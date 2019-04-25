@@ -5,6 +5,51 @@
 //!
 
 use std::cmp::Ordering;
+use std::vec::Vec;
+
+// Human-readable field labels
+const FIELD_NAME: &'static str = "Account";
+const FIELD_USER: &'static str = "Username";
+const FIELD_PASSWORD: &'static str = "Password";
+const FIELD_URL: &'static str = "URL";
+const FIELD_NOTES: &'static str = "Notes";
+
+/// Describe a specific account field.
+#[derive(Clone)]
+pub struct Field {
+    pub name: &'static str,
+    pub secret: bool,
+    pub multiline: bool,
+}
+
+/// Provide a description of each account field.
+pub const FIELDS: [Field; 5] = [
+    Field {
+        name: FIELD_NAME,
+        secret: false,
+        multiline: false,
+    },
+    Field {
+        name: FIELD_USER,
+        secret: false,
+        multiline: false,
+    },
+    Field {
+        name: FIELD_PASSWORD,
+        secret: true,
+        multiline: false,
+    },
+    Field {
+        name: FIELD_URL,
+        secret: false,
+        multiline: false,
+    },
+    Field {
+        name: FIELD_NOTES,
+        secret: false,
+        multiline: true,
+    },
+];
 
 /// This struct represents a single UPM account, and provides an ordering based on the
 /// alphanumeric case-insensitive comparison of account names.
@@ -36,6 +81,21 @@ impl Account {
         self.password = account.password;
         self.url = account.url;
         self.notes = account.notes;
+    }
+
+    pub fn fields() -> Vec<&'static Field> {
+        let mut fields = Vec::new();
+        fields.extend(FIELDS.iter().map(|x| x));
+        fields
+    }
+
+    pub fn field(fieldname: &str) -> Option<Field> {
+        for i in 0..FIELDS.len() {
+            if FIELDS[i].name == fieldname {
+                return Some(FIELDS[i].clone());
+            }
+        }
+        None
     }
 }
 

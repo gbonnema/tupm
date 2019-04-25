@@ -397,14 +397,15 @@ impl AccountEditView {
                 })
                 .dismiss_button("Cancel"),
         );
+
+        cursive.refresh();
     }
 
     /// Handle the CTRL-R "reveal password" feature.
     fn reveal_password(&mut self) {
         let id = format!("{}_{}", VIEW_ID_EDIT, FIELD_PASSWORD);
-        self.find_id(&id, |edit_view: &mut EditView| {
-            edit_view.set_secret(false);
-        });
+        let view: &mut EditView = &mut self.find_id(&id).unwrap();
+        view.set_secret(false);
     }
 
     /// Populate a UI field with a value.
@@ -414,9 +415,11 @@ impl AccountEditView {
             .into_iter()
             .any(|f| f.name == field_name && f.multiline)
         {
-            self.find_id(&id, |edit_view: &mut TextArea| edit_view.set_content(value));
+            let view: &mut TextArea = &mut self.find_id(&id).unwrap();
+            view.set_content(value);
         } else {
-            self.find_id(&id, |edit_view: &mut EditView| edit_view.set_content(value));
+            let view: &mut EditView = &mut self.find_id(&id).unwrap();
+            view.set_content(value);
         }
     }
 
@@ -424,22 +427,18 @@ impl AccountEditView {
     fn get(&mut self, field_name: &str) -> String {
         let id = format!("{}_{}", VIEW_ID_EDIT, field_name);
 
+        let content: String;
         if FIELDS
             .into_iter()
             .any(|f| f.name == field_name && f.multiline)
         {
-            match self.find_id(&id, |edit_view: &mut TextArea| {
-                String::from(edit_view.get_content())
-            }) {
-                Some(x) => x,
-                None => String::from(""),
-            }
+            let view: &mut TextArea = &mut self.find_id(&id).unwrap();
+            content = String::from(view.get_content().deref());
         } else {
-            match self.find_id(&id, |edit_view: &mut EditView| edit_view.get_content()) {
-                Some(x) => (*x).clone(),
-                None => String::from(""),
-            }
+            let view: &mut EditView = &mut self.find_id(&id).unwrap();
+            content = view.get_content().deref().clone();
         }
+        content
     }
 
     /// Load the fields from the contained account object into the UI.
@@ -754,6 +753,7 @@ impl Ui {
         let statusline_text = TextView::new("").with_id(VIEW_ID_STATUSLINE);
 
         let help_text = TextView::new("Press escape or \\ for menu.");
+        let backend_text = TextView::new(format!(" | backend: {}", ui.cursive.backend_name()));
         let status_layout = LinearLayout::horizontal()
             .child(TextView::new("filter: "))
             .child(BoxView::new(
@@ -766,7 +766,8 @@ impl Ui {
             .child(revision_text)
             .child(modified_text)
             .child(TextView::new(" | "))
-            .child(count_text);
+            .child(count_text)
+            .child(backend_text);
         let status_layout = LinearLayout::vertical()
             .child(status_layout)
             .child(help_text)
@@ -1058,6 +1059,10 @@ impl Ui {
         self.ui_rx.try_iter().next()
     }
 
+    pub fn refresh(&mut self) {
+        self.cursive.refresh();
+    }
+
     /// Step the UI by calling into Cursive's step function, then processing any UI messages.
     pub fn step(&mut self) -> bool {
         if !self.cursive.is_running() {
@@ -1298,6 +1303,7 @@ impl Ui {
                 modified_text.set_content("");
             }
         };
+        self.cursive.refresh();
     }
 
     /// Update the status line.
