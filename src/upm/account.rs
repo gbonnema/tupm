@@ -4,48 +4,54 @@
 //! functions within account.
 //!
 
+use model::Data;
+use model::DataItem;
+use model::Field;
+use model::Model;
 use std::cmp::Ordering;
 use std::vec::Vec;
 
 // Human-readable field labels
 const FIELD_NAME: &'static str = "Account";
+const FIELD_NAME_LABEL: &'static str = "Account";
 const FIELD_USER: &'static str = "Username";
+const FIELD_USER_LABEL: &'static str = "Username";
 const FIELD_PASSWORD: &'static str = "Password";
+const FIELD_PASSWORD_LABEL: &'static str = "Password";
 const FIELD_URL: &'static str = "URL";
+const FIELD_URL_LABEL: &'static str = "URL";
 const FIELD_NOTES: &'static str = "Notes";
-
-/// Describe a specific account field.
-#[derive(Clone)]
-pub struct Field {
-    pub name: &'static str,
-    pub secret: bool,
-    pub multiline: bool,
-}
+const FIELD_NOTES_LABEL: &'static str = "Notes";
 
 /// Provide a description of each account field.
 pub const FIELDS: [Field; 5] = [
     Field {
         name: FIELD_NAME,
+        label: FIELD_NAME_LABEL,
         secret: false,
         multiline: false,
     },
     Field {
         name: FIELD_USER,
+        label: FIELD_USER_LABEL,
         secret: false,
         multiline: false,
     },
     Field {
         name: FIELD_PASSWORD,
+        label: FIELD_PASSWORD_LABEL,
         secret: true,
         multiline: false,
     },
     Field {
         name: FIELD_URL,
+        label: FIELD_URL_LABEL,
         secret: false,
         multiline: false,
     },
     Field {
         name: FIELD_NOTES,
+        label: FIELD_NOTES_LABEL,
         secret: false,
         multiline: true,
     },
@@ -82,20 +88,50 @@ impl Account {
         self.url = account.url;
         self.notes = account.notes;
     }
+}
 
-    pub fn fields() -> Vec<&'static Field> {
+impl Model for Account {
+    fn fields() -> Vec<&'static Field> {
         let mut fields = Vec::new();
         fields.extend(FIELDS.iter().map(|x| x));
         fields
     }
 
-    pub fn field(fieldname: &str) -> Option<Field> {
+    fn field(fieldname: &str) -> Option<Field> {
         for i in 0..FIELDS.len() {
             if FIELDS[i].name == fieldname {
                 return Some(FIELDS[i].clone());
             }
         }
         None
+    }
+
+    fn data(&self) -> Data {
+        let mut contents: Vec<DataItem> = Vec::new();
+        contents.push(DataItem {
+            fieldnr: 0,
+            contents: self.name.clone(),
+        });
+        contents.push(DataItem {
+            fieldnr: 1,
+            contents: self.user.clone(),
+        });
+        contents.push(DataItem {
+            fieldnr: 2,
+            contents: self.password.clone(),
+        });
+        contents.push(DataItem {
+            fieldnr: 3,
+            contents: self.url.clone(),
+        });
+        contents.push(DataItem {
+            fieldnr: 4,
+            contents: self.notes.clone(),
+        });
+        Data {
+            key: FIELDS[0].name,
+            data_items: contents,
+        }
     }
 }
 

@@ -17,6 +17,7 @@ pub mod backup;
 mod crypto;
 pub mod database;
 pub mod error;
+pub mod model;
 mod openssl_extra;
 pub mod sync;
 
