@@ -20,7 +20,7 @@ pub struct Data {
 }
 
 /// Trait for model
-pub trait Model {
+pub trait ModelObject {
     fn fields() -> Vec<&'static Field>;
     fn field(fieldname: &str) -> Option<Field>;
     fn data(&self) -> Data;

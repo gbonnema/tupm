@@ -7,7 +7,7 @@
 use model::Data;
 use model::DataItem;
 use model::Field;
-use model::Model;
+use model::ModelObject;
 use std::cmp::Ordering;
 use std::vec::Vec;
 
@@ -90,7 +90,7 @@ impl Account {
     }
 }
 
-impl Model for Account {
+impl ModelObject for Account {
     fn fields() -> Vec<&'static Field> {
         let mut fields = Vec::new();
         fields.extend(FIELDS.iter().map(|x| x));
