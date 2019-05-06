@@ -19,9 +19,17 @@ pub struct Data {
     pub data_items: Vec<DataItem>,
 }
 
-/// Trait for model
+/// Trait for model object
 pub trait ModelObject {
     fn fields() -> Vec<&'static Field>;
     fn field(fieldname: &str) -> Option<Field>;
     fn object_data(&self) -> Data;
+}
+
+// Remember to add Iterator trait
+pub trait ModelList {
+    fn add(&self, key: &str, data: Data) -> Result<(), String>;
+    fn rm(&self, key: &str) -> Result<ModelObject, String>;
+    fn update(&self, key: &str, data_after: Data) -> Result<(), String>;
+    fn get(&self, key: &str) -> Result<ModelObject, String>;
 }
