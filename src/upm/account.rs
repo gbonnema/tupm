@@ -106,7 +106,7 @@ impl ModelObject for Account {
         None
     }
 
-    fn data(&self) -> Data {
+    fn object_data(&self) -> Data {
         let mut contents: Vec<DataItem> = Vec::new();
         contents.push(DataItem {
             fieldnr: 0,

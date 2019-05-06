@@ -23,5 +23,5 @@ pub struct Data {
 pub trait ModelObject {
     fn fields() -> Vec<&'static Field>;
     fn field(fieldname: &str) -> Option<Field>;
-    fn data(&self) -> Data;
+    fn object_data(&self) -> Data;
 }
