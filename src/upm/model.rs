@@ -37,3 +37,21 @@ pub trait ModelList {
     fn update(&self, key: &str, data_after: Data) -> Result<(), String>;
     fn get(&self, key: &str) -> Result<Box<ModelObject>, String>;
 }
+
+use std::sync::mpsc;
+
+pub enum Request {
+    GetModelList,
+    GetModelObject(String),
+    Symc,
+    Quit,
+}
+
+pub enum Notification {
+    RefreshData,
+}
+
+pub trait ModelMsg {
+    fn open_out_ch(&self) -> mpsc::Sender<Request>;
+    fn open_in_ch(&self) -> mpsc::Receiver<Notification>;
+}
