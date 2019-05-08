@@ -38,12 +38,15 @@ pub trait ModelList {
     fn get(&self, key: &str) -> Result<Box<ModelObject>, String>;
 }
 
+// Model communication
+
 use std::sync::mpsc;
 
 pub enum Request {
     GetModelList,
     GetModelObject(String),
-    Symc,
+    UpdateModelObject(Box<ModelObject>),
+    Sync,
     Quit,
 }
 
